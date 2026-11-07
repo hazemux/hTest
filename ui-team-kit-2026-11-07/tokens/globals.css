@@ -1,0 +1,1579 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — from the Figma file's VARIABLES (tsjvcy7q3FDi2gy0xB9sFk):
+ * Color Primitives `6580:10328` and Semantic Colors `6580:11107` (ADR 0017).
+ *
+ * NOT the "Color Shades Kit" swatch frame (5278:23298), which the first
+ * version of this file was read from and which disagrees with the variables
+ * across the whole blue ramp — it made `brand-600` LIGHTER than `brand-500`.
+ * A variable is what a component binds to; a swatch is a picture of one.
+ *
+ * A hex literal in a component is a defect. Components ask for a ROLE
+ * (`--color-primary`, `--color-success`, `--color-line`); the numbered ramp is
+ * for the few places that genuinely need a step.
+ */
+@theme {
+  /* Blue — Figma publishes 100–900. `50` is the ramp's 8% opacity wash
+     (`Blue/opacity-8`) and `950` its darkest step, kept because hover washes
+     and the auth panel's overlay reach for them. */
+  --color-brand-50: #007bbf14;
+  --color-brand-100: #d0e4ee;
+  --color-brand-200: #98cae6;
+  --color-brand-300: #35a9e9;
+  --color-brand-400: #0991dc;
+  --color-brand-500: #007bbf;
+  --color-brand-600: #0a6394;
+  --color-brand-700: #114765;
+  --color-brand-800: #112e3d;
+  --color-brand-900: #0e1b23;
+  --color-brand-950: #0e1b23;
+
+  /* Named roles, so components ask for a job rather than a number. Changing
+   * what "primary" means then happens here, once. */
+  --color-primary: var(--color-brand-500);
+  /* `Button/Primary/hover` and `/pressed` — one step, then two. */
+  --color-primary-hover: var(--color-brand-600);
+  --color-primary-pressed: var(--color-brand-700);
+  /* `Button/Primary/disabled`. */
+  --color-primary-disabled: var(--color-brand-200);
+  --color-on-primary: #ffffff;
+
+  /* The status roles — `Color Palette/*` and `Background|Border|Text/<role>/*`.
+     `-wash` is the role's 16% opacity step (`*-opacity-light`), which is what
+     the comps put behind a status chip or notice. */
+  --color-success: #21a427;
+  --color-success-hover: #228027;
+  --color-success-strong: #205a23;
+  --color-success-wash: #21a42729;
+  /* Background/success/Subtlest — OPAQUE, for a notice that floats over the
+     page (the add-to-cart toast, `7422:37352`), where the wash would show
+     the content through it. */
+  --color-success-subtlest: #d6ead7;
+  --color-warning: #ef9714;
+  --color-warning-hover: #bb7a1a;
+  --color-warning-strong: #7f581d;
+  --color-warning-wash: #ef971429;
+  --color-error: #f43939;
+  --color-error-hover: #db1b1b;
+  --color-error-strong: #932020;
+  --color-error-wash: #f4393929;
+  --color-secondary-hover: #e9a410;
+  --color-secondary-strong: #9c731a;
+  --color-secondary-wash: #ffbe3229;
+
+  /* Chrome — `Theme/*` and `Border/*`. */
+  --color-text-disabled: #aaaaaa;
+  --color-divider: #9e9e9e1f;
+  --color-input-border: #9e9e9e38;
+  --color-action-hover: #9e9e9e0f;
+  --color-action-disabled: #9e9e9e4d;
+  --color-action-disabled-bg: #9e9e9e29;
+  --color-backdrop: #9e9e9e80;
+  --color-border-subtle: #ececec;
+  --color-border: #d8d8d8;
+  --color-border-strong: #aaaaaa;
+  /* Grey/500 — the hairline round the phone's payment-mark tiles (`6959:18577`). */
+  --color-border-mark: #9e9e9e;
+  /* Background/subtle — the package card's ground (`7104:9149`). */
+  --color-surface-subtle: #ececec;
+  /* color-palette/secondary-opacity-darker — the card's bag pill (`7104:9163`). */
+  --color-secondary-wash-strong: #ffbe3261;
+  /* color-palette/error-light — «وفر 5%» on the card's dark scrim, where the
+     bolder error red loses contrast (`7104:9155`). */
+  --color-error-light: #ef5757;
+
+  /* The header's tab rail and its current tab (`6883:34451`) — a literal in
+     the comp, bound to no variable, so named once here rather than copied. */
+  --color-rail: rgba(0, 94, 146, 0.15);
+
+  /* The dark footer's own roles (7194:46670): group chips in
+     Text/Info/subtle on the info wash, and the phone's section dividers. */
+  --color-info-bright: #43d8eb;
+  --color-footer-rule: rgba(255, 255, 255, 0.16);
+  /* The footer's ground — the plates (`footer-ground*.svg`) are masks filled
+     with it; white on the dark theme (below). Named so what continues
+     the plate below it (the tab-bar clearance) is the plate's colour, not the
+     page's. */
+  --color-footer-ground: #212121;
+
+  /* Arabic-first: Tajawal carries both scripts, so one family serves ar and
+   * en rather than swapping fonts at the locale boundary and shifting every
+   * line height. Loaded via next/font/local in the layout (self-hosted — a
+   * Google Fonts URL is a render-blocking dependency on someone else's
+   * uptime and a data leak to their logs on every page view). */
+  --font-sans: 'Tajawal', 'CQ Currency Signs', system-ui, sans-serif;
+
+  /* THE PAGE COLUMN. Every desktop comp lays its content in a 1200px column
+     centred on the 1440 frame (x = 120); every phone comp keeps 24px each
+     side. A container is therefore `max-w-[1248px] px-6` — 1200 of content
+     plus the gutters — and the first version of this site, at
+     `max-w-[1200px] px-6`, drew every page 48px narrower than its comp. */
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: var(--color-brand-950);
+}
+
+/* Deliberately NOT wired to prefers-color-scheme yet. The Figma comps are
+ * light-mode only; inventing a dark palette here would be guessing at brand
+ * decisions nobody has made, and half-applied dark mode looks worse than
+ * none. When the owner wants it, it starts from a dark ramp in the design
+ * file, not from these values inverted. */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  /* Poppins draws Latin, Cairo Arabic (the approved comps' face); Tajawal
+   * stays as the fallback inside --font-display so a cold cache still renders
+   * Arabic in a face that carries the script rather than in a system serif. */
+  font-family: var(--font-display);
+}
+
+/*
+ * Tajawal, self-hosted from files committed under app/fonts/.
+ *
+ * Not a Google Fonts <link>: that is a render-blocking dependency on someone
+ * else's uptime and a request to their logs on every page view, from every
+ * customer, in markets where we have no reason to introduce a third party.
+ *
+ * One family for both scripts. Swapping fonts at the locale boundary changes
+ * metrics, so ar and en would lay out differently and every line height would
+ * need re-checking twice.
+ *
+ * Split by `unicode-range` so a browser fetches only the script the page
+ * actually uses — an Arabic page pulls the three Arabic files (~27 KB) and
+ * never touches the Latin ones. `swap` because a customer reading a price
+ * should not wait on a font.
+ */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/tajawal-400-arabic.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/tajawal-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/tajawal-500-arabic.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/tajawal-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/tajawal-700-arabic.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/tajawal-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Cairo — the family the comps are actually drawn in.
+ *
+ * The home page design (Figma 5690:6095) specifies Cairo at Regular/Medium/
+ * SemiBold/Bold throughout. Tajawal above is kept because earlier screens were
+ * built against it; Cairo is what the approved desktop comps use, so it is the
+ * page font and Tajawal remains the fallback rather than being ripped out
+ * mid-build. Both carry Arabic and Latin, so neither swaps family at the
+ * locale boundary.
+ *
+ * TWO FILES, NOT EIGHT: Cairo ships as a VARIABLE font, so one file per script
+ * covers the whole weight axis. `font-weight: 200 1000` is the range
+ * declaration and matches the files' own `wght` axis — a browser interpolates
+ * every weight between from the same bytes, which is why there is no
+ * per-weight file the way Tajawal has. Declaring less than the file carries
+ * caps every heavier request: at `400 700`, the ExtraBold 20 the account comps
+ * use (`font-extrabold`) silently rendered as Bold.
+ *
+ * Self-hosted for the same reason as Tajawal: a Google Fonts URL is a
+ * render-blocking dependency on someone else's uptime and a request to their
+ * logs from every customer, in markets where we have no reason to introduce a
+ * third party.
+ */
+@font-face {
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url('./fonts/cairo-arabic.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+@font-face {
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url('./fonts/cairo-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Poppins — the store's LATIN face (owner, 2026-11-03), on both locales.
+ *
+ * Latin ONLY, by `unicode-range`: it sits first in --font-display, so every
+ * English letter, Latin digit and price on /en AND /ar draws in Poppins,
+ * while Arabic has no glyph here and falls through to Cairo in the same line.
+ * A browser fetches only the weights a page actually draws Latin in (~8 KB
+ * each); an /en page then needs no Cairo at all.
+ *
+ * STATIC, not variable: Poppins has no variable release, so one file per
+ * weight the store uses — 400 (default), medium, semibold, bold, extrabold
+ * and the single font-black. A weight with no file would be synthesised.
+ *
+ * Self-hosted for the same reason as Cairo (no Google request per page view).
+ */
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/poppins-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/poppins-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/poppins-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/poppins-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/poppins-800-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./fonts/poppins-900-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * The official currency signs — Saudi riyal U+20C1, UAE dirham U+20C3, Omani
+ * rial U+20C4 (`lib/currency/signs.ts`).
+ *
+ * Unicode has them; most device fonts do not yet, and a missing glyph is a box
+ * in the middle of a price. This file holds just these code points, drawn from
+ * the central banks' own artwork (`scripts/build-currency-signs.py`), and the
+ * `unicode-range` means the browser fetches its ~1 KB only on a page that
+ * actually prints one. It sits AFTER Cairo and Tajawal in the stacks: neither
+ * has these characters, so the browser falls through to it before the system
+ * font, whose glyph — where one exists — is not the bank's.
+ *
+ * `swap`, not `block` (2026-10-10 trace, spec §2.3): the block period kept
+ * every price invisible while this 1 KB file loaded, about a second under
+ * throttling, and drew them only when it landed. It was `block` because a box
+ * in a price reads as broken; on the trace's evidence prices drawn at the first
+ * paint, with a fallback glyph (or a box, where the device has none) for the
+ * sign until the file lands, cost less than prices that appear late. This is
+ * about the PRICE paint only: it does not change when the page's largest
+ * element paints. The trace line is in the PR that made this change.
+ */
+@font-face {
+  font-family: 'CQ Currency Signs';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/currency-signs.woff2') format('woff2');
+  unicode-range: U+20C1, U+20C3, U+20C4;
+}
+
+/*
+ * The home comps' own greys and surfaces, read from the design rather than
+ * eyedroppered: text #212121 / #5e5e5e, the search chip's 8% grey wash, and
+ * the wallet pill's 16% brand wash. Named here so a component asks for the
+ * role instead of repeating an rgba() literal in five places.
+ */
+@theme {
+  --font-display: 'Poppins', 'Cairo', 'Tajawal', 'CQ Currency Signs', system-ui, sans-serif;
+
+  /*
+   * THE TYPE SCALE — the sizes of the Figma text styles (Display/*, Heading/*,
+   * Body/*, Caption/*), so a component asks for `text-body-s` rather than
+   * inventing `text-[13px]`. Size only: Figma pairs each size with several
+   * weights (Body/Bold-S, Body/Medium-S…), so the weight stays a separate
+   * `font-*` class. No line-height either, deliberately — the arbitrary sizes
+   * these replace set none, and a type pass must not reflow every line box.
+   *
+   * Mobile frames use the small end (Caption 12, Body-S 14); the desktop comps
+   * step the same element up (Heading-M 18 is the desktop home's body text).
+   * So an element takes its mobile style as the base and its desktop style at
+   * `lg:` — one size for both is how desktop ended up reading at phone size.
+   */
+  --text-caption-xs: 10px;
+  --text-caption: 12px;
+  --text-body-s: 14px;
+  --text-body-m: 15px;
+  --text-body-l: 16px;
+  --text-heading-m: 18px;
+  --text-heading-l: 20px;
+  --text-display: 24px;
+
+  --color-ink: #212121;
+  --color-ink-muted: #5e5e5e;
+  --color-chip: rgba(158, 158, 158, 0.08);
+  --color-brand-wash: rgba(0, 123, 191, 0.16);
+
+  /*
+   * The account and sign-in comps (Figma 4317:16913 and 6507:14231) reach for
+   * four roles the home page never needed. Named here for the same reason as
+   * the four above: a component asks for the ROLE, and a raw rgba() in a
+   * component is a defect.
+   *
+   * `--color-ink-subtle` is genuinely a third grey, NOT a duplicate of
+   * `--color-ink-muted` (#5e5e5e). The comps use #818181 for placeholder text,
+   * form hints and the inactive half of the sign-in toggle; collapsing the two
+   * would make a placeholder as dark as the label above it.
+   *
+   * `--color-field` (6% grey) and `--color-surface-muted` (10% grey) are the
+   * two filled surfaces the comps draw — input backgrounds and the loyalty
+   * card. Neither equals `--color-chip`'s 8%, and rounding them together would
+   * put an input and the card it sits next to at the same value the design
+   * deliberately separated.
+   */
+  --color-ink-subtle: #818181;
+  --color-field: rgba(158, 158, 158, 0.06);
+  --color-surface-muted: rgba(111, 111, 111, 0.1);
+
+  /*
+   * The hairline the account menu draws between its panels (Figma `4317:33481`,
+   * "Line 33"): #9e9e9e at 24%, read from the exported SVG's own stroke rather
+   * than eyedropped. Same grey as `--color-chip` and `--color-field`, at a
+   * third opacity — a rule is not a surface, and giving it the surface value
+   * would make the divider disappear against the card it divides.
+   */
+  --color-line: rgba(158, 158, 158, 0.24);
+
+  /*
+   * The one destructive action in the account area. Sign-out is drawn in red
+   * in the comp because it is the only control there a customer can regret.
+   */
+  --color-danger: var(--color-error);
+}
+
+/*
+ * The active half of the sign-in / sign-up toggle, exactly as the comp draws
+ * it (node 6507:14326) — a five-stop diagonal in the brand's deeper teals.
+ *
+ * A GRADIENT, NOT A TOKEN, because `@theme` colour tokens are single values
+ * and Tailwind would not accept this as one. Declared once here so the five
+ * stops are not copied into a component, which is the same drift a hex literal
+ * would be.
+ */
+:root {
+  /*
+   * THE SAME FIVE STOPS, under a name that is not about one control.
+   *
+   * The product page (Figma 6847:97051 / 6883:31202) paints this ramp on the
+   * price line and on the «أضف للسلة» label, and the country pill in the
+   * mobile navbar wears it too. Figma exports a slightly different ANGLE for
+   * each — -20.48°, -22.86°, -25.27°, -29.7° — because it derives the angle
+   * from each layer's bounding box, not because the designer drew four
+   * gradients. One angle here, so the ramp cannot drift a degree at a time.
+   */
+  --gradient-brand: linear-gradient(
+    -29.7deg,
+    #004e68 23.67%,
+    #1f8cb0 38.36%,
+    #4bbbe0 47.91%,
+    #2c88a7 58.79%,
+    #004e69 86.4%
+  );
+
+  /* Kept as the sign-in toggle's own name, now an alias rather than a second
+     copy of the stops. */
+  --gradient-toggle-active: var(--gradient-brand);
+
+  /* "Silver Cards" — the app tiles' ground on the home comp (`3840:6280`),
+     a published style rather than a variable, so named once here. */
+  --gradient-silver: linear-gradient(
+    229.84deg,
+    rgb(189, 189, 189) 3.43%,
+    rgb(235, 235, 235) 52.47%,
+    rgba(56, 56, 56, 0) 99.42%
+  );
+
+  /* A live app's drawn card (`CategoryArt`), read pixel by pixel from the
+     owner's hand-made «نيتا شات» card. Artwork, not chrome: the dark theme
+     does not redefine these, as an uploaded card does not change either. */
+  --color-art-frame: #007bbf;
+  --color-art-stripe: #278fc8;
+  --color-art-band-top: #cec3be;
+  --color-art-band-bottom: #fef5ef;
+  --color-art-silver-1: #c4c4c4;
+  --color-art-silver-2: #ebebeb;
+  --color-art-silver-3: #e9e9e9;
+  --color-art-silver-4: #e0e0e0;
+  --color-art-silver-5: #d3d3d3;
+  --color-art-silver-6: #c3c3c3;
+  --color-art-silver-7: #b0b0b0;
+  --color-art-name: #0070bf;
+
+  /*
+   * THE SECOND GRADIENT, AND THERE ARE ONLY TWO.
+   *
+   * The comps' «أضف للسلة» label (6847:97211) does NOT use the ramp above: its
+   * middle stop is #32a2c7 rather than #4bbbe0, and it starts deeper. On a
+   * short label the middle stop is most of what you read, so the two are not
+   * interchangeable — collapsing them washes the button's text out. The price
+   * line, the country pill and the sign-in toggle all share the lighter ramp;
+   * this one belongs to text on an outlined button.
+   */
+  --gradient-brand-deep: linear-gradient(
+    -22.86deg,
+    #004e68 12.43%,
+    #1f8cb0 38.75%,
+    #32a2c7 47.69%,
+    #2c88a7 57.34%,
+    #004e69 86.22%
+  );
+}
+
+/*
+ * Brand-gradient TEXT, which the comps use for the price and for the
+ * «أضف للسلة» label on the outlined button.
+ *
+ * A utility rather than four Tailwind arbitrary values repeated per call site:
+ * `background-clip: text` with a transparent fill is a four-property
+ * incantation, and every place it is retyped is a place one property gets
+ * dropped and the text renders invisible.
+ *
+ * `color: transparent` is what makes the clip visible, so a browser that does
+ * not support `background-clip: text` would show nothing at all. The
+ * `@supports` guard keeps the text a solid brand blue there instead of blank.
+ */
+.text-gradient-brand,
+.text-gradient-brand-deep {
+  background-image: var(--gradient-brand);
+  color: var(--color-brand-800);
+}
+
+.text-gradient-brand-deep {
+  background-image: var(--gradient-brand-deep);
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .text-gradient-brand,
+  .text-gradient-brand-deep {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/*
+ * CMS page bodies (terms, privacy, help…). The API sanitises the HTML; this
+ * gives the tags it allows the storefront's own rhythm, because Tailwind's
+ * utilities cannot reach markup the admin wrote.
+ */
+.cq-prose { font-size: var(--text-body-m); line-height: 1.8; color: var(--color-ink); }
+.cq-prose > * + * { margin-top: 0.9em; }
+.cq-prose h2 { margin-top: 1.6em; font-size: var(--text-heading-l); font-weight: 700; }
+.cq-prose h3 { margin-top: 1.3em; font-size: var(--text-heading-m); font-weight: 700; }
+.cq-prose ul, .cq-prose ol { padding-inline-start: 1.5em; }
+.cq-prose ul { list-style: disc; }
+.cq-prose ol { list-style: decimal; }
+.cq-prose li + li { margin-top: 0.35em; }
+.cq-prose a { color: var(--color-brand-500); text-decoration: underline; }
+.cq-prose strong { font-weight: 700; }
+.cq-prose table { width: 100%; border-collapse: collapse; font-size: var(--text-body-s); }
+.cq-prose th, .cq-prose td { border: 1px solid var(--color-line); padding: 0.5em 0.75em; text-align: start; }
+
+/* A CMS page read long-form («Content Page Mobile»): body-s at 1.85 in the
+   muted ink, each section's heading numbered in the brand blue when the page
+   has sections to jump to, and landing a little below the top when jumped to.
+   On desktop the body reads at 18 and the headings at Bold 20, as the
+   «Terms and Conditions Page» desktop comp sets them. */
+.cq-article { font-size: var(--text-body-s); line-height: 1.85; color: var(--color-ink-muted); text-wrap: pretty; }
+.cq-article h2, .cq-article h3, .cq-article strong { color: var(--color-ink); }
+.cq-article h2 { font-size: var(--text-body-l); font-weight: 700; line-height: 1.4; scroll-margin-top: 16px; }
+.cq-article-numbered { counter-reset: cq-section; }
+.cq-article-numbered h2 { counter-increment: cq-section; }
+.cq-article-numbered h2::before { content: counter(cq-section); margin-inline-end: 10px; font-size: var(--text-body-s); color: var(--color-brand-500); }
+@media (min-width: 1024px) {
+  .cq-article { font-size: var(--text-heading-m); }
+  .cq-article h2 { font-size: var(--text-heading-l); }
+  .cq-article-numbered h2::before { font-size: var(--text-body-l); }
+}
+
+/* ---------------------------------------------------------------------------
+ * SURFACES AND THE SECONDARY ACCENT
+ *
+ * Three roles the first pass spelled as literals. `bg-white` appears in eight
+ * components and `#ffbe32` in three; both are correct in the light comps and
+ * both are wrong in the dark ones, so neither can stay a literal once the
+ * dark theme below exists.
+ *
+ * `--color-secondary` is the yellow the "view all" chip, the active tab-bar
+ * item and the savings badge are drawn in. Figma names it
+ * `Background/secondary/Default` and gives it a DIFFERENT value per theme
+ * (#ffbe32 light, #f8c352 dark) — the dark one is lifted because #ffbe32 on
+ * #212121 vibrates. Read from the file's variables, not eyedroppered.
+ *
+ * `--color-surface` is the page's own ground; `--color-surface-raised` is a
+ * card sitting ON that ground. In light they are the same white, which is
+ * exactly why the first pass could get away with one literal. In dark they
+ * must differ (#212121 vs #2b2b2b) or every card dissolves into the page.
+ * ------------------------------------------------------------------------- */
+@theme {
+  --color-secondary: #ffbe32;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+
+  /*
+   * THE INFO PAIR, which the footer's group headings are drawn in.
+   *
+   * Figma calls them `Text/Info/subtle` (#0b92a3) and
+   * `Color Palette/info-opacity-light` (#00bcd4 at 16%) — a cyan that is NOT
+   * the brand blue and not a tint of it. It appears on the footer's
+   * «روابط مهمة» / «سياسات و معلومات» chips in both the mobile and desktop
+   * comps, which is the only place the storefront needs it so far.
+   */
+  --color-info: #0b92a3;
+  --color-info-wash: rgba(0, 188, 212, 0.16);
+
+  /*
+   * THE CHECKOUT'S ROLES (mobile checkout `6847:92697`, 2026-09-28), each a
+   * Figma `Semantic Colors` variable read with its Light and Dark values
+   * through the plugin API — not eyedroppered, not inverted. Named for the
+   * variable, because none of them equals a role above in BOTH themes:
+   *   `Color Palette/primary-opacity-lighter`  the invoice card
+   *   `Color Palette/primary-opacity-light`    the chosen method row
+   *   `Background/Subtle`                      the chosen-method and card panels
+   *   `Background/error/Subtlest`              the "choose a method" notice
+   *   `Button/Neutral/disabled`                the locked pay button
+   *   `Text/Neutral/subtlest`                  the pay button's words — dark
+   *                                            text on the lifted blue in dark
+   * The two blue washes keep the light brand blue in dark too: the file's
+   * `Blue/opacity-*` primitives are the same in both modes.
+   */
+  --color-primary-wash-lighter: #007bbf14;
+  --color-primary-wash-light: #007bbf29;
+  --color-bg-subtle: #ececec;
+  --color-error-subtlest: #f3e1e1;
+  --color-button-disabled: #d8d8d8;
+  --color-on-cta: #ffffff;
+  /* `Text/neutral/boldest` on the yellow button — dark in BOTH themes. */
+  --color-on-secondary: #212121;
+}
+
+/* ---------------------------------------------------------------------------
+ * THE DARK THEME
+ *
+ * Every value below is read from the Figma file's own variables on the dark
+ * home comp (node 7213:10183) — `Background/Page`, `Background/Subtle`,
+ * `Theme/text-primary|secondary|subtitle`, `Border/Default`,
+ * `Color Palette/primary-main`, `Background/secondary/Default`,
+ * `Background/error/Default`. Not an inversion of the light ramp: the design
+ * lifts the brand blue (#007cbf → #0991dc) and the danger red (#f43939 →
+ * #ef5757) because the light values do not carry enough contrast on #212121.
+ * Inverting would have produced neither.
+ *
+ * OPT-IN BY ATTRIBUTE, NOT BY `prefers-color-scheme`. The store's default is
+ * the light comps, which is what the whole catalogue was reviewed against;
+ * a customer whose phone is in dark mode should not silently get a different
+ * store than the one in the screenshots. `html[data-theme]` also outranks the
+ * `:root` that Tailwind emits its tokens to, so redefining the same names
+ * here is all a component needs — no component knows a theme exists.
+ * ------------------------------------------------------------------------- */
+/* «كيف تشحن؟» once closed or after a purchase in this browser — stamped by
+   BUY_GUIDE_SCRIPT before the first paint (`lib/catalog/buy-guide.ts`). */
+html[data-guide='done'] .cq-buy-guide {
+  display: none;
+}
+
+/* ANDROID (2026-11-03): `only light` forbids the browser to darken the light
+   theme — Chrome's «dark theme for sites» and Samsung Internet's dark mode
+   did, so the store looked dark already and the dark-mode switch seemed to do
+   nothing. The store's own dark theme (below) says `dark`, which they leave
+   alone. */
+html {
+  color-scheme: only light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --background: #212121;
+  --foreground: #ffffff;
+
+  --color-surface: #212121;
+  --color-surface-raised: #2b2b2b;
+
+  --color-ink: #ffffff;
+  --color-ink-muted: #d8d8d8;
+  --color-ink-subtle: #bbbbbb;
+
+  --color-line: #5e5e5e;
+  --color-field: rgba(158, 158, 158, 0.06);
+  --color-surface-muted: #3b3b3b;
+  --color-chip: rgba(158, 158, 158, 0.08);
+  --color-brand-wash: rgba(9, 145, 220, 0.16);
+
+  --color-secondary: #f8c352;
+  --color-danger: #ef5757;
+
+  /* The status roles, lifted the way the design lifts red: each role's
+     `-light` step (`Color Palette/*-light`), because the `-main` values sit
+     too dark on #212121. Washes keep their opacity; the hue does the work. */
+  --color-success: #2dbd34;
+  --color-success-hover: #57cc5c;
+  --color-success-wash: #21a4273d;
+  --color-success-subtlest: #19371b;
+  --color-warning: #e9a238;
+  --color-warning-hover: #e5b369;
+  --color-warning-strong: #e9a238;
+  --color-warning-wash: #ef97143d;
+  --color-error: #ef5757;
+  --color-error-hover: #eb8181;
+  --color-error-wash: #f439393d;
+  --color-secondary-hover: #f1cc7d;
+  --color-secondary-wash: #ffbe323d;
+
+  --color-primary-hover: #35a9e9;
+  --color-primary-pressed: #98cae6;
+  --color-primary-disabled: #114765;
+
+  --color-text-disabled: #818181;
+  --color-divider: #9e9e9e29;
+  --color-input-border: #9e9e9e52;
+  --color-border-subtle: #3b3b3b;
+  --color-border: #5e5e5e;
+  --color-border-strong: #818181;
+  --color-border-mark: #818181;
+  --color-surface-subtle: #333333;
+  --color-secondary-wash-strong: #f8c35261;
+  --color-error-light: #ef5757;
+  --color-rail: rgba(9, 145, 220, 0.16);
+
+  /* `Icon/Info/bold` on the dark frame. The wash is the same variable in both
+     themes; the text is not — #0b92a3 on #212121 is too dim to read. */
+  --color-info: #0ad4ee;
+
+  /* The checkout's roles (see the light block): the Dark mode of the same
+     `Semantic Colors` variables. */
+  --color-bg-subtle: #3b3b3b;
+  --color-error-subtlest: #551c1c;
+  --color-button-disabled: #5e5e5e;
+  --color-on-cta: #212121;
+  --color-on-secondary: #212121;
+
+  /* The ramp the components actually reach for. `brand-500` is the one the
+     comps call `primary-main`; the neighbours move with it so a hover state
+     that steps to `brand-700` still steps in the same direction. */
+  --color-brand-50: #10334a;
+  --color-brand-100: rgba(9, 145, 220, 0.16);
+  --color-brand-200: #114765;
+  --color-brand-300: #0a6394;
+  --color-brand-400: #007bbf;
+  --color-brand-500: #0991dc;
+  --color-brand-600: #1f9fe6;
+  --color-brand-700: #35a9e9;
+  --color-brand-800: #66c9ff;
+  --color-brand-900: #99dbff;
+  --color-brand-950: #ffffff;
+
+  /*
+   * THE TWO GRADIENTS, LIFTED — and they had to be.
+   *
+   * Both ramps run dark → light → dark, and both were drawn against WHITE:
+   * their end stops (#004e68, #004e69) are almost black-teal, which is the
+   * point on a white page and illegible on #212121. The price line renders as
+   * gradient TEXT, so on the dark theme the word «السعر» sat at the ramp's
+   * dark end and effectively vanished while the number beside it stayed
+   * bright. Not a contrast opinion: the two halves of one line were visibly
+   * different brightnesses.
+   *
+   * Rebuilt from the dark ramp above rather than by nudging the light stops —
+   * same shape (deep → bright → deep), same stop POSITIONS and angles, moved
+   * into the range this theme can actually show. `-deep` keeps its own
+   * slightly tighter middle, which is the distinction the light pair draws.
+   */
+  --gradient-brand: linear-gradient(
+    -29.7deg,
+    #0a6394 23.67%,
+    #1f9fe6 38.36%,
+    #66c9ff 47.91%,
+    #35a9e9 58.79%,
+    #0a6394 86.4%
+  );
+
+  --gradient-brand-deep: linear-gradient(
+    -22.86deg,
+    #0a6394 12.43%,
+    #1f9fe6 38.75%,
+    #4bbbe0 47.69%,
+    #35a9e9 57.34%,
+    #0a6394 86.22%
+  );
+}
+
+/*
+ * Theme-conditional artwork.
+ *
+ * For the one case a custom property cannot solve: an IMAGE whose own pixels
+ * are the wrong colour for the other theme. Both variants are in the markup
+ * and the CSS picks one, because the server cannot know which theme the
+ * browser will apply (see ThemeScript) and so cannot choose the `src`.
+ */
+html[data-theme='dark'] .cq-light-theme-only { display: none !important; }
+/* THE FOOTER ON THE DARK THEME — the dark home comps' footer (`7213:10184`
+   phone, `6904:105499` desktop) is the light one inverted: a white ground,
+   the #212121 ink for text and glyphs, the group chips' Text/Info/subtle in
+   its #0b92a3 on the same info wash, and Theme/outline-border for the phone's
+   dividers. Scoped to `.cq-footer`: `--color-on-primary`, `--color-info-bright`
+   and `--color-footer-rule` are also read by the rewards panel and toast. The
+   ground is global — the tab-bar clearance under the footer continues it. */
+html[data-theme='dark'] {
+  --color-footer-ground: #ffffff;
+}
+html[data-theme='dark'] .cq-footer {
+  --color-on-primary: #212121;
+  --color-info-bright: #0b92a3;
+  --color-footer-rule: rgba(158, 158, 158, 0.24);
+}
+/* NATIVE <select> OPTIONS ON THE DARK THEME. Most of the store's selects draw
+   no ground of their own — the invisible ones over a styled control (phone
+   code, country pill), and fields on the 6% `--color-field` wash — while their
+   text is the dark theme's white. Chromium on Windows, Linux and Android paints
+   the open list from the select's own colours, over white: white options on
+   white. The options get an opaque ground from the theme instead; light mode
+   is untouched. */
+html[data-theme='dark'] select option,
+html[data-theme='dark'] select optgroup {
+  background-color: var(--color-surface-raised);
+  color: var(--color-ink);
+}
+html[data-theme='dark'] select option:disabled { color: var(--color-ink-subtle); }
+html:not([data-theme='dark']) .cq-dark-theme-only { display: none !important; }
+
+/* CARD-SCHEME MARKS ON THE DARK THEME. Visa's navy and Mastercard's reds are
+   drawn for light grounds and are the schemes' own artwork — not ours to
+   recolour. On the dark theme each sits on a small white plate, as banks and
+   wallets show them. */
+html[data-theme='dark'] .cq-mark-plate {
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: content-box;
+}
+/* THE BANK'S 3-D SECURE PAGE (BankCheckSheet). The bank draws it for a white
+   page and sets no colours of its own; on the dark theme the frame keeps a
+   white ground, as a card mark keeps its white plate. */
+.cq-bank-frame {
+  background: #ffffff;
+  color-scheme: light;
+}
+
+/* Inside a 56px method tile, where two plated marks must fit side by side. */
+html[data-theme='dark'] .cq-mark-plate.cq-mark-plate-tight {
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+/*
+ * FOOTER LINK GROUPS — one <details> per menu.
+ *
+ * The mobile comp collapses each group behind its chip and the desktop comp
+ * shows both open with the chip as a plain heading. That is exactly what
+ * <details> does natively on a phone, so the phone gets the element's own
+ * behaviour — no JavaScript, and it works before hydration — and the desktop
+ * is the CSS override below: force the panel open, and take the affordances
+ * off the summary so a heading does not look clickable when it is not.
+ */
+.cq-footer-group > summary { list-style: none; }
+.cq-footer-group > summary::-webkit-details-marker { display: none; }
+
+/* «و المزيد» on the home page's payment tiles (components/home/PaymentMethods)
+   is a tile, not a disclosure triangle. */
+.cq-pay-more > summary { list-style: none; }
+.cq-pay-more > summary::-webkit-details-marker { display: none; }
+
+@media (min-width: 1024px) {
+  .cq-footer-group > summary { cursor: default; pointer-events: none; }
+  .cq-footer-group > summary .cq-footer-caret { display: none; }
+
+  /*
+   * `display` IS NOT WHAT HIDES A CLOSED <details>, which cost a round of
+   * debugging: the panel computes `display: block` and lays out at its full
+   * height while still painting nothing, because the browser hides the
+   * content through `::details-content`, not through the child's own box.
+   * `content-visibility` on that pseudo-element is the switch.
+   *
+   * DEGRADES TO THE COLLAPSED GROUPS. A browser without `::details-content`
+   * ignores this rule and shows the desktop footer with its three groups
+   * closed — every link still one click away, and the chips still say what
+   * they hold. Worse than the comp, no worse than the phone.
+   */
+  .cq-footer-group::details-content {
+    content-visibility: visible;
+    block-size: auto;
+  }
+}
+
+/*
+ * KEYBOARD FOCUS, EVERYWHERE THE SAME. The comps draw no focus states, and
+ * six controls had switched the browser's own ring off (`outline-none`) —
+ * the header search box among them — so a keyboard customer could tab into
+ * a field and not see it. One rule, the primary blue, 2px out: shown for
+ * keyboard focus only (`:focus-visible`) — though a text input matches it on
+ * every focus, tap included. IN `@layer base` so a component can still style
+ * its own: unlayered, this outranked every Tailwind utility whatever their
+ * specificity, and the search frame's `outline-none` could not remove the
+ * ring hugging its input (it read as the placeholder being selected).
+ */
+@layer base {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* THE DRAWER OWNS THE SCREEN while it is open (`MobileMenu` sets the
+   attribute). The bottom tab bar is a fixed layer at the same z-index as the
+   drawer, and it stayed drawn on top of the backdrop — a second, live
+   navigation over a modal one. Scrolling the page behind the drawer is locked
+   for the same reason: the backdrop is a dismiss area, not a window. */
+html[data-drawer='open'] .cq-tab-bar { display: none; }
+
+/* THE LIVE CHAT STEPS ASIDE (`SupportChat`): its button while the drawer
+   owns the screen, and the button AND Crisp's own window while the card's
+   3-D Secure sheet is open — the bank's page is the only thing to look at
+   then. `.crisp-client` is the root Crisp draws into. */
+html[data-drawer='open'] .cq-chat-spot,
+html:has(dialog[data-bank-check][open]) .cq-chat-spot,
+html:has(dialog[data-bank-check][open]) .crisp-client { display: none !important; }
+/* CRISP'S WINDOW IN THE STORE'S BLUE. Crisp paints from `--crisp-color-theme-*`
+   (r, g, b triplets), written inline on `.crisp-client` from the workspace's
+   custom colour (the old store's navy, 2026-10-28) — which also overrides any
+   palette name a page sends. `!important` here outranks that inline value.
+   Each step is the brand ramp's (@theme above): 100 = brand-100, 200–400 =
+   brand-400, 500 = brand-500 (#007bbf), 600–900 = brand-600–900. If Crisp ever
+   renames these, the window just falls back to the workspace's colour. */
+.crisp-client {
+  --crisp-color-theme-100: 208, 228, 238 !important;
+  --crisp-color-theme-200: 9, 145, 220 !important;
+  --crisp-color-theme-300: 9, 145, 220 !important;
+  --crisp-color-theme-400: 9, 145, 220 !important;
+  --crisp-color-theme-500: 0, 123, 191 !important;
+  --crisp-color-theme-600: 10, 99, 148 !important;
+  --crisp-color-theme-700: 17, 71, 101 !important;
+  --crisp-color-theme-800: 17, 46, 61 !important;
+  --crisp-color-theme-900: 14, 27, 35 !important;
+  --crisp-color-theme-reverse: 255, 255, 255 !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cq-chat-button { animation: cq-fade-in var(--cq-motion-base) var(--cq-ease-out); }
+}
+
+/* The pay button pinned above the tab bar comes down with it when the bar
+   hides on scroll (TabBar sets `data-tabbar`), rather than floating over the
+   gap it left. */
+@media (max-width: 1023.98px) {
+  html[data-tabbar='hidden'] .cq-above-tabbar { bottom: 12px; }
+}
+html[data-drawer='open'] { overflow: hidden; }
+
+/*
+ * THE PAYMENT-METHOD SHEET (`PaymentSection`, «Checkout Mobile» 2026-09-30):
+ * a native <dialog>, so the focus trap, Escape and the inert page come from
+ * the browser. It rises from the bottom on the phone and fades in as a
+ * centred dialog from `lg`; the page behind does not scroll while it is open.
+ */
+/* THE BASKET BUMPS when a line lands in it (`CartBump`). */
+@keyframes cq-cart-bump {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25) rotate(-8deg); }
+  60% { transform: scale(0.94) rotate(4deg); }
+  100% { transform: scale(1); }
+}
+.cq-cart-bump { animation: cq-cart-bump 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .cq-cart-bump { animation: none; }
+}
+
+/* THE ADD-TO-CART TOAST slides down into place (`ToastHost`). */
+@keyframes cq-toast-in {
+  from { opacity: 0; transform: translateY(-16px); }
+}
+.cq-toast { animation: cq-toast-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .cq-toast { animation: none; }
+}
+
+@keyframes cq-sheet-rise { from { transform: translateY(100%); } }
+@keyframes cq-sheet-fade { from { opacity: 0; } }
+.cq-sheet[open] { animation: cq-sheet-rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.cq-sheet[open]::backdrop { animation: cq-sheet-fade 0.25s ease-out; }
+@media (min-width: 1024px) {
+  .cq-sheet[open] { animation-name: cq-sheet-fade; animation-duration: 0.2s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cq-sheet[open], .cq-sheet[open]::backdrop { animation: none; }
+}
+/* A sheet left open on a page Cache Components keeps hidden (React <Activity>,
+   inline `display: none` — see the buy bar below) must not lock the page the
+   customer is on now. */
+html:has(.cq-sheet[open]:not([style*="display: none"] *)) { overflow: hidden; }
+/* AND IT LEAVES THE WAY IT CAME (2026-10-07): `display` and `overlay` are
+   transitioned discretely, so a closed sheet stays drawn — and in the top
+   layer — for its exit, sinking on the phone and fading from `lg`. It takes
+   no pointer while it leaves (HANDBOOK «Motion», rule 8); `close()` has
+   already returned focus to its opener. Browsers that cannot transition
+   `overlay` (Safari today) close at once, as before. Entry stays the
+   `[open]` animation above: nothing transitions out of `display: none`. */
+.cq-sheet,
+.cq-sheet::backdrop {
+  transition:
+    translate var(--cq-motion-base) var(--cq-ease-in),
+    opacity var(--cq-motion-base) var(--cq-ease-in),
+    display var(--cq-motion-base) allow-discrete,
+    overlay var(--cq-motion-base) allow-discrete;
+}
+.cq-sheet:not([open]) { translate: 0 100%; pointer-events: none; }
+.cq-sheet:not([open])::backdrop { opacity: 0; }
+@media (min-width: 1024px) {
+  .cq-sheet:not([open]) { translate: none; opacity: 0; }
+}
+
+/*
+ * MOTION TOKENS (ADR 0041, HANDBOOK «Motion») — the same values as
+ * `lib/motion/tokens.ts`, which Motion's `m` elements use. Change both.
+ */
+:root {
+  --cq-motion-fast: 120ms;
+  --cq-motion-base: 200ms;
+  --cq-motion-slow: 320ms;
+  --cq-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --cq-ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/*
+ * REDUCED MOTION, EVERYWHERE AT ONCE. One rule instead of guarding every
+ * `transition` utility one by one: durations collapse to a millisecond, so a
+ * state change lands in its final frame and a looping spinner becomes a still
+ * ring (its words still say what is happening). Delays are left alone. The
+ * one animation that hides content on a timer, `cq-notice-auto`, is already
+ * `animation: none` here, so no state changes. Motion's `m` elements are
+ * JavaScript and do not see this — they ask `useMotionTransition()`.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after, ::backdrop {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    /* 0s, not the usual 1ms: nothing here waits for `transitionend`, and a
+       1ms transition on every element left Chromium's full-page capture
+       scrolled to the bottom (2026-10-07, PR #215 phone baselines). */
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * A SUBMIT BUTTON AT WORK (`components/ui/SubmitButton`): after 150 ms of a
+ * pending action the label gives way to a ring in the label's own colour.
+ * The words are hidden, not removed, so the button keeps its size, and
+ * `-webkit-text-fill-color` hides them while `currentColor` still feeds the
+ * ring. In `components` so a utility (`absolute`, …) on the button wins.
+ */
+@keyframes cq-spin { to { rotate: 1turn; } }
+@layer components {
+  .cq-submit[data-spinning] { position: relative; -webkit-text-fill-color: transparent; }
+  .cq-submit[data-spinning] > * { visibility: hidden; }
+  .cq-submit[data-spinning]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    border-inline-end-color: transparent;
+    animation: cq-spin 0.7s linear infinite;
+  }
+}
+
+/*
+ * A FIGURE THAT CHANGED (a re-priced fee or total, a basket total) washes
+ * once so the eye finds it. Keyed by the value in React, so a quick second
+ * change simply restarts it. Decoration only — it gates nothing.
+ */
+@keyframes cq-changed {
+  from { background-color: var(--color-primary-wash-light); }
+  to { background-color: transparent; }
+}
+.cq-changed { animation: cq-changed 0.7s var(--cq-ease-out); border-radius: 6px; }
+
+/*
+ * A NUMBER THAT MOVED (the buy bar's price): rises 4px into place. Keyed by
+ * the value, so it restarts rather than queues.
+ */
+@keyframes cq-rise {
+  from { opacity: 0; translate: 0 4px; }
+}
+.cq-rise { animation: cq-rise var(--cq-motion-base) var(--cq-ease-out); }
+
+/*
+ * A CHOSEN TILE'S MARK (package tiles): the tick badge scales in, so the
+ * choice is not told by colour alone.
+ */
+@keyframes cq-pop {
+  from { opacity: 0; scale: 0.6; }
+}
+.cq-pop { animation: cq-pop var(--cq-motion-base) var(--cq-ease-out); }
+
+/*
+ * SOMETHING ARRIVING (a notice, a panel, a search result list, a new
+ * payment-method area): fades and rises 4px. Entry only — what leaves is
+ * removed at once or handled by Motion's presence.
+ */
+@keyframes cq-enter {
+  from { opacity: 0; translate: 0 4px; }
+}
+.cq-enter { animation: cq-enter var(--cq-motion-base) var(--cq-ease-out); }
+@keyframes cq-fade-in { from { opacity: 0; } }
+.cq-fade-in { animation: cq-fade-in var(--cq-motion-base) var(--cq-ease-out); }
+
+/*
+ * A SHAPE WAITING FOR ITS CONTENT (Tap's card fields while the SDK loads):
+ * a soft sheen across the placeholder; a flat tint under reduced motion.
+ */
+@keyframes cq-sheen {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+.cq-skeleton {
+  background: linear-gradient(90deg, var(--color-bg-subtle) 30%, var(--color-border) 50%, var(--color-bg-subtle) 70%) 0 0 / 200% 100%;
+  animation: cq-sheen 1.4s ease-in-out infinite;
+}
+
+/*
+ * THE CAPTURED TICK (payment result, `captured` branch ONLY — HANDBOOK
+ * §payments): the path draws itself once. Its resting state is DRAWN; the
+ * animation only fills the time before it, so a browser that never runs it,
+ * reduced motion, or a print still shows the tick. Needs `pathLength="1"`.
+ */
+@keyframes cq-tick-draw {
+  from { stroke-dashoffset: 1; }
+}
+.cq-tick-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: cq-tick-draw 0.4s var(--cq-ease-out) 0.12s backwards;
+}
+
+/*
+ * NAVIGATION UNDER WAY (`components/ui/NavigationProgress`): a 2px line at
+ * the very top, shown only after 150 ms so a cached page never flashes it,
+ * gone at once when the new page commits. The sweep uses
+ * `inset-inline-start`, so it runs from the reading side in both languages.
+ */
+.cq-nav-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 100;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--cq-motion-fast) linear;
+}
+.cq-nav-progress[data-active] { opacity: 1; transition-delay: 150ms; }
+.cq-nav-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: var(--color-brand-500);
+  animation: cq-search-bar 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cq-nav-progress::before { inset-inline-start: 0; width: 100%; opacity: 0.6; }
+}
+
+/*
+ * A SLOW PAGE ON ITS WAY (`components/ui/PageLoader`, Claude Design «Loader
+ * Concepts» 2026-10-08): a full-screen loader built from the ChargerQuick
+ * mark, shown only after the page has kept the customer waiting 600 ms and
+ * gone the moment it commits. The mark's six colours are the LOGO's own
+ * (the logo pack wins for logos only — UI tokens are unchanged), and the
+ * dark strike's ground is the comp's navy in both themes. Under reduced
+ * motion nothing moves: the whole mark stands still beside its words.
+ */
+.cq-page-loader {
+  --cq-logo-orange: #f3803f;
+  --cq-logo-amber: #f09a24;
+  --cq-logo-blue: #3fa7df;
+  --cq-logo-yellow: #fbba30;
+  --cq-logo-cyan: #1dbcd4;
+  --cq-logo-sky: #64c8e3;
+  --cq-loader-night: #0e1b23;
+  --cq-loader-night-ink: #d0e4ee;
+  --cq-loader-charge: linear-gradient(90deg, var(--cq-logo-blue), var(--cq-logo-cyan), var(--cq-logo-yellow), var(--cq-logo-orange));
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  animation: cq-fade-in var(--cq-motion-base) var(--cq-ease-out);
+}
+/* As a top-layer popover: none of the UA's popover box, the whole screen. */
+.cq-page-loader[popover] {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cq-page-loader[popover]:not(:popover-open) { display: block; }
+.cq-page-loader[data-variant="thunder-dark"] { background: var(--cq-loader-night); color: var(--cq-loader-night-ink); }
+.cq-page-loader svg { overflow: visible; }
+.cq-page-loader .cq-mark-part { transform-box: fill-box; transform-origin: center; }
+
+/* The charge bar: a short gradient sweeping from the reading side. */
+@keyframes cq-loader-bar {
+  from { inset-inline-start: -45%; }
+  to { inset-inline-start: 100%; }
+}
+.cq-loader-bar { position: relative; overflow: hidden; border-radius: 999px; background: var(--color-line); }
+.cq-loader-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 45%;
+  border-radius: 999px;
+  background: var(--cq-loader-charge);
+  animation: cq-loader-bar 1.3s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+
+@keyframes cq-loader-dot { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+.cq-loader-dot { animation: cq-loader-dot 1.2s infinite; }
+.cq-loader-dot:nth-child(2) { animation-delay: 0.2s; }
+.cq-loader-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* 1a PIXEL CHARGE: the squares stream into the bolt, then it lights. */
+@keyframes cq-loader-px {
+  0% { opacity: 0; transform: translate(-14px, 6px) scale(0.3); }
+  35%, 80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translate(10px, -4px) scale(0.6); }
+}
+@keyframes cq-loader-bolt { 0%, 30% { opacity: 0.18; } 55% { opacity: 1; } 62% { opacity: 0.7; } 68%, 85% { opacity: 1; } 100% { opacity: 0.18; } }
+.cq-loader-pixel .cq-mark-bolt { animation: cq-loader-bolt 2s ease-in-out infinite; }
+.cq-loader-pixel .cq-mark-part { animation: cq-loader-px 2s cubic-bezier(0.3, 0.7, 0.3, 1) var(--cq-delay) infinite both; }
+
+/* 1b BATTERY FILL: a grey mark fills with colour from the bottom, then flashes. */
+@keyframes cq-loader-rise { 0% { transform: translateY(150px); } 72%, 100% { transform: translateY(0); } }
+@keyframes cq-loader-fill-fade { 0%, 84% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes cq-loader-flash {
+  0%, 72% { filter: none; }
+  78% { filter: brightness(1.3) drop-shadow(0 0 8px rgba(251, 186, 48, 0.7)); }
+  90%, 100% { filter: none; }
+}
+.cq-loader-battery svg { animation: cq-loader-flash 2.4s linear infinite; }
+.cq-loader-battery .cq-mark-level { animation: cq-loader-rise 2.4s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+.cq-loader-battery .cq-mark-charged { animation: cq-loader-fill-fade 2.4s linear infinite; }
+
+/* 1e / 1f THUNDER STRIKE: the bolt strikes with a double flicker and a sky flash; the squares burst as sparks. */
+@keyframes cq-loader-strike {
+  0%, 38% { opacity: 0; clip-path: inset(0 0 100% 0); filter: brightness(3); }
+  41% { opacity: 1; clip-path: inset(0 0 0 0); filter: brightness(3) drop-shadow(0 0 10px #fff); }
+  43% { opacity: 0.15; }
+  46% { opacity: 1; filter: brightness(2) drop-shadow(0 0 8px var(--cq-logo-yellow)); }
+  48% { opacity: 0.35; }
+  51% { opacity: 1; clip-path: inset(0 0 0 0); filter: drop-shadow(0 0 6px rgba(63, 167, 223, 0.8)); }
+  82% { opacity: 1; filter: drop-shadow(0 0 3px rgba(63, 167, 223, 0.5)); }
+  100% { opacity: 0; clip-path: inset(0 0 0 0); filter: none; }
+}
+@keyframes cq-loader-strike-light {
+  0%, 38% { opacity: 0; clip-path: inset(0 0 100% 0); filter: none; }
+  41% { opacity: 1; clip-path: inset(0 0 0 0); filter: drop-shadow(0 0 12px rgba(251, 186, 48, 0.95)) saturate(1.4); }
+  43% { opacity: 0.2; }
+  46% { opacity: 1; filter: drop-shadow(0 0 10px rgba(63, 167, 223, 0.9)) saturate(1.3); }
+  48% { opacity: 0.4; }
+  51% { opacity: 1; clip-path: inset(0 0 0 0); filter: drop-shadow(0 0 6px rgba(251, 186, 48, 0.6)); }
+  82% { opacity: 1; filter: drop-shadow(0 2px 4px rgba(14, 27, 35, 0.15)); }
+  100% { opacity: 0; clip-path: inset(0 0 0 0); filter: none; }
+}
+@keyframes cq-loader-sky { 0%, 39% { opacity: 0; } 41% { opacity: 0.5; } 43% { opacity: 0; } 46% { opacity: 0.3; } 48%, 100% { opacity: 0; } }
+@keyframes cq-loader-sky-light { 0%, 39% { opacity: 0; } 41% { opacity: 0.9; } 43% { opacity: 0.1; } 46% { opacity: 0.6; } 49%, 100% { opacity: 0; } }
+@keyframes cq-loader-spark {
+  0%, 40% { opacity: 0; transform: none; }
+  44% { opacity: 1; transform: translate(var(--cq-spark-x), var(--cq-spark-y)) scale(1.3); }
+  60%, 85% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+.cq-loader-thunder .cq-mark-part { animation: cq-loader-spark 2.6s cubic-bezier(0.2, 0.8, 0.3, 1) infinite both; }
+.cq-loader-thunder .cq-mark-bolt { animation: cq-loader-strike 2.6s linear infinite; }
+.cq-loader-thunder-light .cq-mark-bolt { animation-name: cq-loader-strike-light; }
+.cq-loader-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 55% 35%, #fff, rgba(255, 255, 255, 0.4) 40%, transparent 75%);
+  animation: cq-loader-sky 2.6s linear infinite;
+}
+.cq-loader-sky-light {
+  background: radial-gradient(circle at 55% 38%, rgba(251, 186, 48, 0.45), rgba(63, 167, 223, 0.18) 35%, transparent 70%);
+  animation-name: cq-loader-sky-light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* `none`, not the global 1 ms: several of these END hidden, and a still
+     loader must show the whole mark. The sky stays dark. */
+  .cq-page-loader,
+  .cq-page-loader *,
+  .cq-page-loader *::before,
+  .cq-page-loader svg { animation: none !important; }
+  .cq-loader-bar::before { inset-inline-start: 0; width: 100%; opacity: 0.6; }
+}
+
+/*
+ * THE BUY BAR TAKES THE TAB BAR'S PLACE («Product Page Mobile»): on the phone,
+ * a page that draws `[data-buy-bar]` (the product page and a leaf category's
+ * purchase page, at any URL) hides the tab bar and its spacer, and the header
+ * shows the basket instead. Decided by what the page holds rather than by a
+ * path list, so every purchase page behaves the same.
+ *
+ * ONLY A BUY BAR ON THE PAGE BEING SHOWN. With Cache Components a page left
+ * behind stays in the document, hidden by React's <Activity> with an inline
+ * `display: none !important` on its top element — so a bare
+ * `:has([data-buy-bar])` kept matching after the customer left a product page,
+ * and every page after it lost the tab bar and the chip's balance. The
+ * `:not(...)` skips a bar inside such a hidden page (or hidden itself).
+ */
+@media (max-width: 1023.98px) {
+  html:has([data-buy-bar]:not([style*="display: none"], [style*="display: none"] *)) .cq-tab-bar { display: none; }
+  html:has([data-buy-bar]:not([style*="display: none"], [style*="display: none"] *)) .cq-header-cart { display: grid; }
+  /* …and the rewards chip shrinks to its coin, so chip + country + basket fit 360px. */
+  html:has([data-buy-bar]:not([style*="display: none"], [style*="display: none"] *)) .cq-chip-label { display: none; }
+  /* …and so does the box held for it while it streams (`RewardsChipFallback`,
+     a member's full chip, 97.5px): the coin's 32px, guest or member — or the
+     row overflowed 360px by 10px until the chip landed. */
+  html:has([data-buy-bar]:not([style*="display: none"], [style*="display: none"] *)) [data-cq-fallback="rewards-chip"] { width: 32px; }
+  /* The clearance under the footer becomes the BUY BAR's: its measured height
+     (`--cq-buy-bar-height`, kept by `ProductPurchase`), or the bar's usual
+     height before the script has run. */
+  html:has([data-buy-bar]:not([style*="display: none"], [style*="display: none"] *)) .cq-tabbar-spacer { height: calc(var(--cq-buy-bar-height, 148px) + 8px); }
+}
+/* THE DESKTOP KEEPS THE BUY BAR TOO (fixed since 2026-10), so the clearance
+   under the footer exists there as well, at the bar's height. Unlayered, so it
+   outranks the spacer's own `lg:hidden`. */
+@media (min-width: 1024px) {
+  html:has([data-buy-bar]:not([style*="display: none"], [style*="display: none"] *)) .cq-tabbar-spacer { display: block; height: var(--cq-buy-bar-height, 82px); }
+}
+/* WITHOUT `:has()` (older browsers) the tab bar stays, and it would cover the
+   buy buttons: the bar sits above it instead, at the same offset the cart's
+   pay area uses — the buttons stay reachable, the basket stays in the tab bar.
+   The clearance then has to hold both bars; `data-buy-bar-shown` on <html> is set by
+   `ProductPurchase` beside the height. */
+@supports not selector(:has(*)) {
+  @media (max-width: 1023.98px) {
+    [data-buy-bar] { bottom: calc(19.72vw + min(5.2vw, 22px) + 12px); }
+    html[data-buy-bar-shown] .cq-tabbar-spacer { height: calc(19.72vw + 16px + var(--cq-buy-bar-height, 148px) + 12px); }
+  }
+}
+
+/* NO ZOOM ON FOCUS (owner, 2026-09-29). iOS Safari zooms the page into any
+   focused field whose text is under 16px, and the comps set every field at
+   14px — so tapping the search box or a player-ID field threw the page
+   sideways and left it zoomed. Scoped to iOS WebKit (`-webkit-touch-callout`
+   exists nowhere else), so the drawn 14px survives on Android and desktop,
+   neither of which zooms. NOT `maximum-scale=1` on the viewport: that also
+   takes pinch-zoom away from Android customers who need it. Unlayered, so it
+   outranks the utilities' `text-[14px]`. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* PRINTING IS THE PAGE'S OWN CONTENT. The invoice («تحميل الفاتورة») is
+   saved as a PDF through the browser's print dialog; the site's header,
+   footer and tab bar are siblings of <main> and never reach the paper. A
+   private section's <main> sits one level down, inside its `ClarityMask`
+   (`display: contents`), which is let through for it. */
+@media print {
+  body > *:not(main):not([data-clarity-mask]) { display: none !important; }
+  body { background: #fff !important; }
+}
+
+/*
+ * «تقييمك» star picker (v0.1.57): five radios, 5→1 in the DOM and laid out
+ * reversed, so `:checked ~ label` lights the chosen star and every lower one
+ * with no script. Reversed flex reads 1→5 from the inline start in both
+ * directions.
+ */
+.cq-stars {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.cq-stars input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.cq-stars label {
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.35;
+  border-radius: 6px;
+}
+.cq-stars input:checked ~ label,
+.cq-stars label:hover,
+.cq-stars label:hover ~ label {
+  filter: none;
+  opacity: 1;
+}
+.cq-stars input:focus-visible + label {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Search panel: the thin progress line while the next rows arrive (frame 5). */
+@keyframes cq-search-bar {
+  from {
+    inset-inline-start: -35%;
+  }
+  to {
+    inset-inline-start: 100%;
+  }
+}
+.cq-search-bar {
+  animation: cq-search-bar 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cq-search-bar {
+    animation: none;
+    inset-inline-start: 0;
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
+/*
+ * IN-PAGE CONFIRMATIONS (a saved setting, a changed password, a kept order…).
+ * They are rendered by the server from a redirect flag, so the motion is
+ * CSS-only — no JavaScript needed. `cq-notice-in` eases in and stays (errors
+ * must not vanish); `cq-notice-auto` eases in, waits ~6s, then fades out and
+ * collapses so the page below does not jump.
+ */
+@keyframes cq-notice-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes cq-notice-out {
+  to { opacity: 0; max-height: 0; margin-block: 0; padding-block: 0; overflow: hidden; visibility: hidden; }
+}
+.cq-notice-in { animation: cq-notice-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* Two animations, so nothing moves while the message is being read: the exit
+   has only a `to` frame and runs for its last half second alone. */
+.cq-notice-auto { animation: cq-notice-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), cq-notice-out 0.5s ease-out 6.5s forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .cq-notice-in, .cq-notice-auto { animation: none; }
+}
+
+/*
+ * VIP (ADR 0044; Claude Design «VIP Experience», 2026-10-09).
+ *
+ * THE VIP SURFACE IS THEME-INDEPENDENT ON PURPOSE: the hero, the chip, the
+ * crest and the avatar frames are the same dark navy and metal in the light
+ * and the dark theme (the canvas draws them so), so these tokens have no
+ * `[data-theme="dark"]` twin — the dark values ARE these. They are literal
+ * because the brand ramp is redefined in the dark theme (`--color-brand-900`
+ * turns pale there) and the navy must not follow it. Gold is a STROKE and a
+ * fill on navy, never text on a light surface (1.7:1); a gold word on light
+ * is `--vip-gold-ink` (6.4:1).
+ *
+ * The ring and crest stops are artwork — like the logo pack's colours —
+ * kept here so no component carries a hex literal (HANDBOOK §5).
+ */
+:root {
+  --vip-navy: #0e1b23;
+  --vip-deep: #114765;
+  --vip-blue: #007bbf;
+  --vip-sky: #35a9e9;
+  --vip-gold: #ffbe32;
+  --vip-gold-ink: #7f581d;
+  --vip-on-navy: #ffffff;
+
+  --vip-ring-bronze-1: #6e3a1e; --vip-ring-bronze-2: #c9814f; --vip-ring-bronze-3: #f0b98a; --vip-ring-bronze-4: #a45f36; --vip-ring-bronze-5: #7a4122;
+  --vip-ring-silver-1: #6f7880; --vip-ring-silver-2: #e9eef2; --vip-ring-silver-3: #b9c2c9; --vip-ring-silver-4: #ffffff; --vip-ring-silver-5: #8e979f;
+  --vip-ring-gold-1: #a8761c; --vip-ring-gold-2: #ffd877; --vip-ring-gold-3: #fff1b8; --vip-ring-gold-4: #e0a52a; --vip-ring-gold-5: #9c6a12;
+  --vip-ring-platinum-1: #9fc9e8; --vip-ring-platinum-2: #f3d9f0; --vip-ring-platinum-3: #eef7fc; --vip-ring-platinum-4: #bfeee6; --vip-ring-platinum-5: #c9c0f2;
+  --vip-ring-sheen: #ffffff;
+
+  --vip-crest-medal-1: #114765; --vip-crest-medal-2: #0e1b23; --vip-crest-medal-3: #0a6394;
+  --vip-crest-gold-1: #fff1b8; --vip-crest-gold-2: #ffbe32; --vip-crest-gold-3: #c98a12; --vip-crest-gold-4: #ffd877;
+  --vip-crest-bolt-top-1: #ffd877; --vip-crest-bolt-top-2: #f57f3d;
+  --vip-crest-bolt-low-1: #9fe3f5; --vip-crest-bolt-low-2: #41a7de;
+
+  /* The canvas's easings («VIP Experience» motion spec). */
+  --vip-ease-decel: cubic-bezier(0.2, 0, 0, 1);
+  --vip-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --vip-ease-sweep: cubic-bezier(0.4, 0, 0.2, 1);
+  --vip-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/*
+ * VIP MOTION — all CSS (HANDBOOK «Motion» rule 1: these are highlights and
+ * ambient loops on what is already on screen, not presence). Only transform,
+ * opacity and SVG stroke-dashoffset move; nothing loops on text. In Arabic
+ * every sweep and trace runs the other way (`[dir="rtl"]`, from the one
+ * `dir` the layout sets). Reduced motion: the rings and halo stand still,
+ * every sweep and sparkle is gone, every entrance lands in its final frame.
+ */
+
+/* Avatar frame: a sheen travels the ring; platinum cross-fades a second
+   pearl; gold sparkles; the VIP halo breathes. */
+@keyframes cq-vip-trace { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
+@keyframes cq-vip-trace-rtl { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 100; } }
+.cq-vip-sheen { animation: cq-vip-trace var(--cq-vip-trace, 8s) linear infinite; }
+[dir="rtl"] .cq-vip-sheen { animation-name: cq-vip-trace-rtl; }
+@keyframes cq-vip-iri { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+.cq-vip-iri { opacity: 0; animation: cq-vip-iri 12s ease-in-out infinite; }
+@keyframes cq-vip-twinkle {
+  0%, 72%, 100% { opacity: 0; transform: scale(0.3); }
+  82% { opacity: 1; transform: scale(1); }
+}
+.cq-vip-sparkle { opacity: 0; transform-box: fill-box; transform-origin: center; animation: cq-vip-twinkle 4s ease-in-out 1s infinite; }
+@keyframes cq-vip-breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.75; } }
+.cq-vip-glow { opacity: 0.5; animation: cq-vip-breathe 8s ease-in-out infinite; }
+
+/* The crest's light band: 1.9 s of every 6 s, from 600 ms. */
+@keyframes cq-vip-crest-sweep {
+  0% { transform: translateX(-44px) skewX(-18deg); }
+  32%, 100% { transform: translateX(52px) skewX(-18deg); }
+}
+@keyframes cq-vip-crest-sweep-rtl {
+  0% { transform: translateX(52px) skewX(18deg); }
+  32%, 100% { transform: translateX(-44px) skewX(18deg); }
+}
+.cq-vip-crest-sweep { animation: cq-vip-crest-sweep 6s var(--vip-ease-sweep) 0.6s infinite both; }
+[dir="rtl"] .cq-vip-crest-sweep { animation-name: cq-vip-crest-sweep-rtl; }
+
+/* The hero's light band crosses once. */
+@keyframes cq-vip-hero-sweep {
+  from { transform: translateX(-120%) skewX(-16deg); }
+  to { transform: translateX(320%) skewX(-16deg); }
+}
+@keyframes cq-vip-hero-sweep-rtl {
+  from { transform: translateX(120%) skewX(16deg); }
+  to { transform: translateX(-320%) skewX(16deg); }
+}
+.cq-vip-hero-sweep { animation: cq-vip-hero-sweep 1.4s var(--vip-ease-sweep) 0.3s both; }
+[dir="rtl"] .cq-vip-hero-sweep { animation-name: cq-vip-hero-sweep-rtl; }
+
+/* Benefit rows rise in turn (`--i` is the row), their icons draw. */
+@keyframes cq-vip-rise { from { opacity: 0; transform: translateY(8px); } }
+.cq-vip-rise { animation: cq-vip-rise 260ms var(--vip-ease-decel) calc(120ms + var(--i, 0) * 60ms) both; }
+@keyframes cq-vip-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.cq-vip-draw { stroke-dasharray: 1; animation: cq-vip-draw 420ms var(--vip-ease-decel) calc(200ms + var(--i, 0) * 60ms + var(--k, 0) * 80ms) both; }
+
+/* The fee-waived row: in once, one gold shine across it. */
+@keyframes cq-vip-row-in { from { opacity: 0; transform: translateY(6px); } }
+.cq-vip-row-in { animation: cq-vip-row-in 240ms var(--vip-ease-decel) 150ms both; }
+@keyframes cq-vip-shine {
+  from { transform: translateX(-110%) skewX(-16deg); }
+  to { transform: translateX(330%) skewX(-16deg); }
+}
+@keyframes cq-vip-shine-rtl {
+  from { transform: translateX(110%) skewX(16deg); }
+  to { transform: translateX(-330%) skewX(16deg); }
+}
+.cq-vip-shine { animation: cq-vip-shine 900ms var(--vip-ease-sweep) 450ms both; }
+[dir="rtl"] .cq-vip-shine { animation-name: cq-vip-shine-rtl; }
+
+/* Subscribed (only after the server said so): the crest pops once, one gold burst. */
+@keyframes cq-vip-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.cq-vip-pop { animation: cq-vip-pop 400ms var(--vip-ease-spring) 80ms both; }
+@keyframes cq-vip-burst { 0% { opacity: 0.7; transform: scale(0.6); } 100% { opacity: 0; transform: scale(1.7); } }
+.cq-vip-burst { animation: cq-vip-burst 700ms var(--vip-ease-decel) 250ms both; }
+
+/* VIP's sheets (stop renewal, welcome): the store's `cq-sheet`, entering as
+   the canvas draws it — up 24 px and in, 320 ms; out down 16 px, 200 ms. */
+@keyframes cq-vip-sheet-in { from { opacity: 0; transform: translateY(24px); } }
+.cq-sheet.cq-vip-sheet[open] { animation: cq-vip-sheet-in 320ms var(--vip-ease-decel); }
+.cq-sheet.cq-vip-sheet:not([open]) { translate: 0 16px; opacity: 0; }
+
+/* The checkout's VIP link, dismissed: fades 150 ms on the exit easing, then
+   is `display: none` (transitioned discretely — no timer removes it). */
+.cq-vip-upsell {
+  transition:
+    opacity 150ms var(--vip-ease-exit),
+    display 150ms allow-discrete;
+}
+.cq-vip-upsell[data-leaving] { opacity: 0; display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cq-vip-sheen, .cq-vip-sparkle, .cq-vip-crest-sweep, .cq-vip-hero-sweep, .cq-vip-shine, .cq-vip-burst { display: none; }
+  .cq-vip-iri { animation: none; opacity: 0; }
+  .cq-vip-glow { animation: none; opacity: 0.5; }
+}

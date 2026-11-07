@@ -1,0 +1,6 @@
+<svg width="21" height="15" viewBox="0 0 21 15" fill="none" xmlns="http://www.w3.org/2000/svg"><clipPath id="c-pl"><rect width="21" height="15" rx="3"/></clipPath><g clip-path="url(#c-pl)"><svg x="0" y="0" width="21" height="15" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice">
+  <g fill-rule="evenodd">
+    <path fill="#fff" d="M640 480H0V0h640z"/>
+    <path fill="#dc143c" d="M640 480H0V240h640z"/>
+  </g>
+</svg></g></svg>

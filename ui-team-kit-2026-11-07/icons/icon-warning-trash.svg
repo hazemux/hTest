@@ -1,0 +1,14 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(0.000 0.000)">
+<g id="Warning Indicator">
+<g id="Vector">
+<path d="M19.5997 5.97998C16.7877 5.64998 13.9588 5.47998 11.1383 5.47998C9.46632 5.47998 7.79432 5.57998 6.12232 5.77998L4.39966 5.97998" fill="#F43939"/>
+<path d="M19.5997 5.97998C16.7877 5.64998 13.9588 5.47998 11.1383 5.47998C9.46632 5.47998 7.79432 5.57998 6.12232 5.77998L4.39966 5.97998" stroke="#F43939" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<path id="Vector_2" d="M8.49976 4.96997L8.71976 3.65997C8.87976 2.70997 8.99976 1.99997 10.6898 1.99997H13.3098C14.9998 1.99997 15.1298 2.74997 15.2798 3.66997L15.4998 4.96997" stroke="#F43939" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M18.8496 9.13998L18.1996 19.21C18.0896 20.78 17.9996 22 15.2096 22H8.78966C5.99966 22 5.90966 20.78 5.79966 19.21L5.14966 9.13998" stroke="#F43939" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M10.33 16.5H13.66" stroke="#F43939" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_5" d="M9.50024 12.5H14.5002" stroke="#F43939" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>
